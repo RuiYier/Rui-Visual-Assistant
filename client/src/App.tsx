@@ -1,13 +1,18 @@
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import { VideoCapture } from './components/VideoCapture';
 import { ChatPanel } from './components/ChatPanel';
 import { ControlBar } from './components/ControlBar';
+import { SettingsPanel } from './components/SettingsPanel';
 import { useCamera } from './hooks/useCamera';
 import { useMicrophone } from './hooks/useMicrophone';
 import { useWebSocket } from './hooks/useWebSocket';
 import { VoiceActivityDetector } from './utils/vad';
+import { Settings } from 'lucide-react';
 
 function App() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState('alloy');
+  const [samplingRate, setSamplingRate] = useState(1);
   const {
     videoRef,
     isStreaming: isCameraOn,
@@ -35,6 +40,7 @@ function App() {
     sendVideoFrame,
     sendAudioChunk,
     sendScreenshot,
+    sendConfig,
     clearMessages,
   } = useWebSocket();
 
@@ -46,6 +52,8 @@ function App() {
   const startFrameSampling = useCallback(() => {
     if (frameIntervalRef.current) return;
 
+    const interval = 1000 / samplingRate; // 根据采样率计算间隔
+
     frameIntervalRef.current = window.setInterval(() => {
       if (isCameraOn && isConnected) {
         const frame = captureFrame();
@@ -53,8 +61,8 @@ function App() {
           sendVideoFrame(frame);
         }
       }
-    }, 2000); // 每 2 秒发送一帧
-  }, [isCameraOn, isConnected, captureFrame, sendVideoFrame]);
+    }, interval);
+  }, [isCameraOn, isConnected, captureFrame, sendVideoFrame, samplingRate]);
 
   const stopFrameSampling = useCallback(() => {
     if (frameIntervalRef.current) {
@@ -114,14 +122,30 @@ function App() {
     };
   }, [stopFrameSampling]);
 
+  // 设置改变时发送配置
+  useEffect(() => {
+    if (isConnected) {
+      sendConfig({ voice: selectedVoice, samplingRate });
+    }
+  }, [selectedVoice, samplingRate, isConnected, sendConfig]);
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       {/* 头部 */}
-      <header className="px-6 py-4 bg-white shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-800">AI 视觉对话助手</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          打开摄像头和麦克风，AI 能看到你并进行对话
-        </p>
+      <header className="px-6 py-4 bg-white shadow-sm flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">AI 视觉对话助手</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            打开摄像头和麦克风，AI 能看到你并进行对话
+          </p>
+        </div>
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          title="设置"
+        >
+          <Settings className="w-6 h-6 text-gray-600" />
+        </button>
       </header>
 
       {/* 主内容区 */}
@@ -180,6 +204,16 @@ function App() {
         onToggleMic={handleToggleMic}
         onScreenshot={handleScreenshot}
         onClearMessages={clearMessages}
+      />
+
+      {/* 设置面板 */}
+      <SettingsPanel
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        selectedVoice={selectedVoice}
+        samplingRate={samplingRate}
+        onVoiceChange={setSelectedVoice}
+        onSamplingRateChange={setSamplingRate}
       />
     </div>
   );

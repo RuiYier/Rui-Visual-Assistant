@@ -137,6 +137,14 @@ export function useWebSocket() {
     });
   }, []);
 
+  const sendConfig = useCallback((config: { voice?: string; samplingRate?: number }) => {
+    wsService.send({
+      type: 'config',
+      data: JSON.stringify(config),
+      timestamp: Date.now(),
+    });
+  }, []);
+
   const clearMessages = useCallback(() => {
     setMessages([]);
   }, []);
@@ -150,6 +158,7 @@ export function useWebSocket() {
     sendVideoFrame,
     sendAudioChunk,
     sendScreenshot,
+    sendConfig,
     clearMessages,
   };
 }
