@@ -6,6 +6,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { useCamera } from './hooks/useCamera';
 import { useMicrophone } from './hooks/useMicrophone';
 import { useWebSocket } from './hooks/useWebSocket';
+import { useSmartSampling } from './hooks/useSmartSampling';
 import { VoiceActivityDetector } from './utils/vad';
 import { Settings } from 'lucide-react';
 
@@ -45,31 +46,37 @@ function App() {
   } = useWebSocket();
 
   const vadRef = useRef<VoiceActivityDetector | null>(null);
-  const frameIntervalRef = useRef<number | null>(null);
   const isSpeakingRef = useRef(false);
+
+  // 智能采样
+  const {
+    currentRate,
+    isActive: isSamplingActive,
+    setActive: setSamplingActive,
+    setIdle: setSamplingIdle,
+    startSampling,
+    stopSampling,
+  } = useSmartSampling({
+    activeRate: samplingRate,
+    idleRate: samplingRate * 0.2, // 空闲时为活跃时的 20%
+    transitionDelay: 3000,
+  });
 
   // 视频帧采样
   const startFrameSampling = useCallback(() => {
-    if (frameIntervalRef.current) return;
-
-    const interval = 1000 / samplingRate; // 根据采样率计算间隔
-
-    frameIntervalRef.current = window.setInterval(() => {
+    startSampling(() => {
       if (isCameraOn && isConnected) {
         const frame = captureFrame();
         if (frame) {
           sendVideoFrame(frame);
         }
       }
-    }, interval);
-  }, [isCameraOn, isConnected, captureFrame, sendVideoFrame, samplingRate]);
+    });
+  }, [isCameraOn, isConnected, captureFrame, sendVideoFrame, startSampling]);
 
   const stopFrameSampling = useCallback(() => {
-    if (frameIntervalRef.current) {
-      clearInterval(frameIntervalRef.current);
-      frameIntervalRef.current = null;
-    }
-  }, []);
+    stopSampling();
+  }, [stopSampling]);
 
   // 切换摄像头
   const handleToggleCamera = useCallback(async () => {
@@ -87,10 +94,12 @@ function App() {
     if (isMicOn) {
       stopRecording();
       vadRef.current?.stop();
+      setSamplingIdle();
     } else {
       await startRecording((audioBase64) => {
         // 发送音频数据
         sendAudioChunk(audioBase64);
+        setSamplingActive(); // 检测到音频时设置为活跃
       });
 
       // 启动 VAD
@@ -98,11 +107,13 @@ function App() {
         vadRef.current = new VoiceActivityDetector(30, 1500);
         vadRef.current.start(micStream, (isSpeaking) => {
           isSpeakingRef.current = isSpeaking;
-          // 可以根据说话状态调整采样频率
+          if (isSpeaking) {
+            setSamplingActive();
+          }
         });
       }
     }
-  }, [isMicOn, startRecording, stopRecording, sendAudioChunk, micStream]);
+  }, [isMicOn, startRecording, stopRecording, sendAudioChunk, micStream, setSamplingActive, setSamplingIdle]);
 
   // 截图分析
   const handleScreenshot = useCallback(() => {
@@ -173,6 +184,9 @@ function App() {
               </span>
               <span className={isConnected ? 'text-green-500' : 'text-gray-400'}>
                 ● 服务器 {isConnected ? '已连接' : '未连接'}
+              </span>
+              <span className={isSamplingActive ? 'text-blue-500' : 'text-gray-400'}>
+                ● 采样 {currentRate.toFixed(1)} fps
               </span>
             </div>
             {(cameraError || micError) && (
