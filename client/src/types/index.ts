@@ -1,7 +1,7 @@
 // WebSocket 消息类型
 export interface ClientMessage {
-  type: 'video_frame' | 'audio_chunk' | 'screenshot';
-  data: string;  // Base64 编码
+  type: 'video_frame' | 'audio_chunk' | 'screenshot' | 'config';
+  data: string;  // Base64 编码 或 JSON 配置
   timestamp: number;
 }
 

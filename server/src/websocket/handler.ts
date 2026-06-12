@@ -2,11 +2,17 @@ import { WebSocket } from 'ws';
 import { ClientMessage, ServerMessage } from '../types/index.js';
 import { processAudio } from '../services/asr.js';
 import { processVision } from '../services/vision.js';
-import { synthesizeSpeech } from '../services/tts.js';
+import { synthesizeSpeech, setTTSConfig } from '../services/tts.js';
 
 // 对话上下文（单用户）
 let conversationHistory: Array<{ role: 'user' | 'assistant'; content: any }> = [];
 const MAX_CONTEXT_TURNS = 5;
+
+// 客户端配置
+let clientConfig = {
+  voice: 'alloy',
+  samplingRate: 1,
+};
 
 export function handleWebSocket(ws: WebSocket) {
   // 发送欢迎消息
@@ -45,6 +51,9 @@ async function handleMessage(ws: WebSocket, message: ClientMessage) {
       break;
     case 'screenshot':
       await handleScreenshot(ws, message.data);
+      break;
+    case 'config':
+      handleConfig(message.data);
       break;
     default:
       sendJSON(ws, { type: 'error', data: '未知消息类型' });
@@ -123,6 +132,25 @@ async function handleScreenshot(ws: WebSocket, imageBase64: string) {
 function sendJSON(ws: WebSocket, data: ServerMessage) {
   if (ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify(data));
+  }
+}
+
+function handleConfig(configData: string) {
+  try {
+    const config = JSON.parse(configData);
+
+    if (config.voice) {
+      clientConfig.voice = config.voice;
+      setTTSConfig({ voice: config.voice });
+      console.log('TTS voice updated to:', config.voice);
+    }
+
+    if (config.samplingRate) {
+      clientConfig.samplingRate = config.samplingRate;
+      console.log('Sampling rate updated to:', config.samplingRate);
+    }
+  } catch (error) {
+    console.error('Error parsing config:', error);
   }
 }
 
