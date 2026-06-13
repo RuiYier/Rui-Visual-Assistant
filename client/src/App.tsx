@@ -8,6 +8,7 @@ import { useCamera } from './hooks/useCamera';
 import { useMicrophone } from './hooks/useMicrophone';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useSmartSampling } from './hooks/useSmartSampling';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { VoiceActivityDetector } from './utils/vad';
 import { Settings } from 'lucide-react';
 
@@ -146,6 +147,15 @@ function App() {
       vadRef.current?.stop();
     };
   }, [stopFrameSampling]);
+
+  // 快捷键
+  useKeyboardShortcuts({
+    onToggleCamera: handleToggleCamera,
+    onToggleMic: handleToggleMic,
+    onScreenshot: handleScreenshot,
+    onClearMessages: clearMessages,
+    onToggleSettings: () => setIsSettingsOpen(!isSettingsOpen),
+  });
 
   // 设置改变时发送配置
   useEffect(() => {
