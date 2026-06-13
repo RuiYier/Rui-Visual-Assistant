@@ -14,7 +14,30 @@ let clientConfig = {
   samplingRate: 1,
 };
 
+// 心跳检测
+const HEARTBEAT_INTERVAL = 30000; // 30 秒
+
 export function handleWebSocket(ws: WebSocket) {
+  let isAlive = true;
+  let heartbeatTimer: NodeJS.Timeout;
+
+  // 心跳检测
+  const startHeartbeat = () => {
+    heartbeatTimer = setInterval(() => {
+      if (!isAlive) {
+        console.log('Client heartbeat timeout, terminating...');
+        ws.terminate();
+        return;
+      }
+      isAlive = false;
+      ws.ping();
+    }, HEARTBEAT_INTERVAL);
+  };
+
+  ws.on('pong', () => {
+    isAlive = true;
+  });
+
   // 发送欢迎消息
   sendJSON(ws, {
     type: 'response',
@@ -37,7 +60,15 @@ export function handleWebSocket(ws: WebSocket) {
 
   ws.on('close', () => {
     console.log('Client disconnected');
+    clearInterval(heartbeatTimer);
   });
+
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+    clearInterval(heartbeatTimer);
+  });
+
+  startHeartbeat();
 }
 
 async function handleMessage(ws: WebSocket, message: ClientMessage) {

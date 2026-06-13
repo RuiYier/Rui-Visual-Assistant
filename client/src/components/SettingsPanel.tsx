@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, X, Volume2 } from 'lucide-react';
+import { Voice } from '../types';
+import { fetchVoices } from '../services/api';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -10,15 +12,6 @@ interface SettingsPanelProps {
   onSamplingRateChange: (rate: number) => void;
 }
 
-const VOICES = [
-  { id: 'alloy', name: 'Alloy', description: '中性、平衡' },
-  { id: 'echo', name: 'Echo', description: '男性、沉稳' },
-  { id: 'fable', name: 'Fable', description: '男性、温暖' },
-  { id: 'onyx', name: 'Onyx', description: '男性、深沉' },
-  { id: 'nova', name: 'Nova', description: '女性、活泼' },
-  { id: 'shimmer', name: 'Shimmer', description: '女性、柔和' },
-];
-
 export function SettingsPanel({
   isOpen,
   onClose,
@@ -27,6 +20,14 @@ export function SettingsPanel({
   onVoiceChange,
   onSamplingRateChange,
 }: SettingsPanelProps) {
+  const [voices, setVoices] = useState<Voice[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchVoices().then(setVoices);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -55,7 +56,7 @@ export function SettingsPanel({
               AI 语音音色
             </h3>
             <div className="grid grid-cols-2 gap-2">
-              {VOICES.map((voice) => (
+              {voices.map((voice) => (
                 <button
                   key={voice.id}
                   onClick={() => onVoiceChange(voice.id)}
