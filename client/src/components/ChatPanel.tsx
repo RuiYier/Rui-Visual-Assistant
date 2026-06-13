@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { ChatMessage } from '../types';
-import { User, Bot, Loader2 } from 'lucide-react';
+import { User, Bot, Loader2, Download } from 'lucide-react';
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -22,11 +22,44 @@ export function ChatPanel({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, currentTranscript, currentResponse]);
 
+  // 导出对话历史
+  const exportHistory = () => {
+    if (messages.length === 0) {
+      alert('没有对话记录可导出');
+      return;
+    }
+
+    const content = messages
+      .map((msg) => {
+        const time = new Date(msg.timestamp).toLocaleString();
+        const role = msg.role === 'user' ? '用户' : 'AI';
+        return `[${time}] ${role}: ${msg.content}`;
+      })
+      .join('\n');
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `对话记录_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50 rounded-lg overflow-hidden">
       {/* 标题 */}
-      <div className="px-4 py-3 bg-white border-b">
+      <div className="px-4 py-3 bg-white border-b flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-800">对话记录</h2>
+        <button
+          onClick={exportHistory}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          title="导出对话记录"
+        >
+          <Download className="w-5 h-5 text-gray-600" />
+        </button>
       </div>
 
       {/* 消息列表 */}

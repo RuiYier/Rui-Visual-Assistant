@@ -3,10 +3,12 @@ import { VideoCapture } from './components/VideoCapture';
 import { ChatPanel } from './components/ChatPanel';
 import { ControlBar } from './components/ControlBar';
 import { SettingsPanel } from './components/SettingsPanel';
+import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { useCamera } from './hooks/useCamera';
 import { useMicrophone } from './hooks/useMicrophone';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useSmartSampling } from './hooks/useSmartSampling';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { VoiceActivityDetector } from './utils/vad';
 import { Settings } from 'lucide-react';
 
@@ -14,6 +16,19 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState('alloy');
   const [samplingRate, setSamplingRate] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isPerformanceVisible, setIsPerformanceVisible] = useState(false);
+
+  // 检测移动端
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const {
     videoRef,
     isStreaming: isCameraOn,
@@ -133,6 +148,15 @@ function App() {
     };
   }, [stopFrameSampling]);
 
+  // 快捷键
+  useKeyboardShortcuts({
+    onToggleCamera: handleToggleCamera,
+    onToggleMic: handleToggleMic,
+    onScreenshot: handleScreenshot,
+    onClearMessages: clearMessages,
+    onToggleSettings: () => setIsSettingsOpen(!isSettingsOpen),
+  });
+
   // 设置改变时发送配置
   useEffect(() => {
     if (isConnected) {
@@ -160,22 +184,26 @@ function App() {
       </header>
 
       {/* 主内容区 */}
-      <main className="flex-1 flex gap-4 p-4 overflow-hidden">
+      <main className={`flex-1 flex gap-4 p-4 overflow-hidden ${
+        isMobile ? 'flex-col' : 'flex-row'
+      }`}>
         {/* 左侧：视频区域 */}
-        <div className="w-1/2 flex flex-col">
+        <div className={isMobile ? 'w-full' : 'w-1/2 flex flex-col'}>
           <VideoCapture
             videoRef={videoRef}
             isStreaming={isCameraOn}
             error={cameraError}
+            isFullscreen={isFullscreen}
             onStartCamera={startCamera}
             onStopCamera={stopCamera}
             onSwitchCamera={switchCamera}
             onCaptureFrame={captureFrame}
+            onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
           />
 
           {/* 状态信息 */}
           <div className="mt-4 p-3 bg-white rounded-lg shadow-sm">
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-4 text-sm flex-wrap">
               <span className={isCameraOn ? 'text-green-500' : 'text-gray-400'}>
                 ● 摄像头 {isCameraOn ? '开启' : '关闭'}
               </span>
@@ -198,7 +226,7 @@ function App() {
         </div>
 
         {/* 右侧：对话区域 */}
-        <div className="w-1/2">
+        <div className={isMobile ? 'w-full flex-1' : 'w-1/2'}>
           <ChatPanel
             messages={messages}
             currentTranscript={currentTranscript}
@@ -228,6 +256,12 @@ function App() {
         samplingRate={samplingRate}
         onVoiceChange={setSelectedVoice}
         onSamplingRateChange={setSamplingRate}
+      />
+
+      {/* 性能监控 */}
+      <PerformanceMonitor
+        isVisible={isPerformanceVisible}
+        onToggle={() => setIsPerformanceVisible(!isPerformanceVisible)}
       />
     </div>
   );
