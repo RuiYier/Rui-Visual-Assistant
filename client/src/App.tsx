@@ -3,6 +3,7 @@ import { VideoCapture } from './components/VideoCapture';
 import { ChatPanel } from './components/ChatPanel';
 import { ControlBar } from './components/ControlBar';
 import { SettingsPanel } from './components/SettingsPanel';
+import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { useCamera } from './hooks/useCamera';
 import { useMicrophone } from './hooks/useMicrophone';
 import { useWebSocket } from './hooks/useWebSocket';
@@ -16,6 +17,7 @@ function App() {
   const [samplingRate, setSamplingRate] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isPerformanceVisible, setIsPerformanceVisible] = useState(false);
 
   // 检测移动端
   useEffect(() => {
@@ -244,6 +246,12 @@ function App() {
         samplingRate={samplingRate}
         onVoiceChange={setSelectedVoice}
         onSamplingRateChange={setSamplingRate}
+      />
+
+      {/* 性能监控 */}
+      <PerformanceMonitor
+        isVisible={isPerformanceVisible}
+        onToggle={() => setIsPerformanceVisible(!isPerformanceVisible)}
       />
     </div>
   );
