@@ -10,7 +10,7 @@ import { useWebSocket } from './hooks/useWebSocket';
 import { useSmartSampling } from './hooks/useSmartSampling';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { VoiceActivityDetector } from './utils/vad';
-import { Settings, Sparkles } from 'lucide-react';
+import { Settings } from 'lucide-react';
 
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -163,16 +163,11 @@ function App() {
     <div className={`h-screen flex flex-col bg-gray-50 transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between animate-fade-in">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900 tracking-tight">AI 视觉对话助手</h1>
-            <p className="text-xs text-gray-500 mt-0.5">
-              打开摄像头和麦克风，AI 能看到你并进行对话
-            </p>
-          </div>
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 tracking-tight">AI 视觉对话助手</h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            打开摄像头和麦克风，AI 能看到你并进行对话
+          </p>
         </div>
         <button
           onClick={() => setIsSettingsOpen(true)}

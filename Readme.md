@@ -1,203 +1,68 @@
-# Rui - AI 视觉对话助手 - 设计文档
+# AI 视觉对话助手
 
-> 项目背景:
->
-> XEngineer第四批 选题一：AI 视觉对话助手
->
-> 开发一款与 AI 对话的应用，要求：打开摄像头与麦克风，让 AI 能够看到摄像头中的视频内容、听到用户说的话，并给予恰当的回应。需综合考虑视觉内容的理解准确性、语音交互的自然度与流畅性，以及端云协同的成本控制策略等。
+> 一个基于 WebRTC 和 AI 的实时视觉对话应用，支持摄像头视频分析和语音交互。
 
-## 一、用户故事
+## ✨ 功能特性
 
-### 计划实现的用户故事
+- 🎥 **实时视频分析** - AI 能够看到摄像头画面并理解视觉内容
+- 🎤 **语音识别** - 支持中文语音输入，自动过滤静音和水词
+- 🔊 **语音合成** - 支持多种 AI 音色（冰糖、茉莉、苏打、白桦）
+- 📱 **响应式设计** - 完美适配桌面端和移动端
+- ⚡ **智能采样** - 根据对话状态自动调整视频帧率，节省资源
+- 💬 **实时对话** - WebSocket 双向通信，低延迟交互
+- 📸 **截图分析** - 支持手动截图让 AI 分析特定画面
+- 📊 **性能监控** - 实时查看 FPS、延迟、API 调用等指标
+- 💾 **对话导出** - 支持导出对话历史记录
+- ⌨️ **快捷键** - 支持键盘快捷键操作
 
-P0: MVP 核心功能  |  P1: 重要功能扩展  |  P2: 体验优化完善  |  P3: 锦上添花功能
+## 🛠️ 技术栈
 
-| 编号 | 用户故事 | 优先级 | 状态 |
-|------|---------|--------|------|
-| US-01 | 作为用户，我想打开摄像头，让AI能看到我的画面 | P0 | ✅ 已实现 |
-| US-02 | 作为用户，我想打开麦克风，让AI能听到我说话 | P0 | ✅ 已实现 |
-| US-03 | 作为用户，我想通过语音与AI对话，获得自然的回复 | P0 | ✅ 已实现 |
-| US-04 | 作为用户，我想听到AI的语音回复，而不仅仅是文字 | P0 | ✅ 已实现 |
-| US-05 | 作为用户，我想选择不同的AI音色 | P1 | ✅ 已实现 |
-| US-06 | 作为用户，我想在静默时节省资源消耗 | P1 | ✅ 已实现 |
-| US-07 | 作为用户，我想在移动端也能正常使用 | P1 | ✅ 已实现 |
-| US-08 | 作为用户，我想截图让AI分析特定画面 | P2 | ✅ 已实现 |
-| US-09 | 作为用户，我想看到当前的采样状态和连接状态 | P2 | ✅ 已实现 |
-| US-10 | 作为用户，我想导出对话历史记录 | P2 | ✅ 已实现 |
-| US-11 | 作为用户，我想调整视频帧采样频率 | P3 | ✅ 已实现 |
-| US-12 | 作为用户，我想使用快捷键操作 | P3 | ✅ 已实现 |
-| US-13 | 作为用户，我想看到系统性能监控 | P3 | ✅ 已实现 |
+### 前端
 
-### 最终实现的用户故事
-
-全部 13 个用户故事均已实现。
-
----
-
-## 二、成本控制策略
-
-### 想到的成本控制技巧
-
-| 编号 | 技巧 | 预期节省 | 实际采用 | 说明 |
-|------|------|---------|---------|------|
-| TC-01 | 智能帧采样 | ~60% 视觉 token | ✅ 是 | 对话时 1fps，静默时 0.2fps |
-| TC-02 | 图片压缩 | ~50% 图片大小 | ✅ 是 | 720p + JPEG 60% 质量 |
-| TC-03 | 静音检测 (VAD) | ~40% ASR 调用 | ✅ 是 | 静音时暂停音频处理 |
-| TC-04 | TTS 缓存 | ~30% TTS 调用 | ✅ 是 | 相同文本缓存音频 |
-| TC-05 | 上下文裁剪 | 控制 token 增长 | ✅ 是 | 保留最近 5 轮对话 |
-| TC-06 | 流式响应 | 减少等待时间 | ❌ 否 | Mimo API 暂不支持 |
-| TC-07 | 音频格式优化 | ~40% 音频大小 | ❌ 否 | 使用默认 mp3 格式 |
-| TC-08 | 批量处理 | 减少请求次数 | ❌ 否 | 实时性要求高 |
-
-### 实际采用的成本控制策略
-
-#### 1. 智能帧采样
-- **实现方式**：useSmartSampling hook
-- **工作原理**：
-  - 活跃状态（对话中）：使用用户设定的采样率（默认 1fps）
-  - 空闲状态（静默）：自动降低到 20% 采样率（0.2fps）
-  - 通过 VAD 检测语音活动，自动切换状态
-  - 3 秒无活动后自动切换到空闲状态
-- **节省效果**：约 60% 视觉 token 消耗
-
-#### 2. 图片压缩
-- **实现方式**：captureVideoFrame 函数
-- **工作原理**：
-  - 限制最大分辨率为 1280x720
-  - 使用 JPEG 格式，60% 质量
-  - 自动缩放保持宽高比
-- **节省效果**：约 50% 图片传输大小
-
-#### 3. 静音检测 (VAD)
-- **实现方式**：VoiceActivityDetector 类
-- **工作原理**：
-  - 使用 Web Audio API 分析音频频谱
-  - 计算平均音量，与阈值比较
-  - 静音超时 1.5 秒后判定为静音
-  - 静音时暂停音频数据发送
-- **节省效果**：约 40% ASR 调用次数
-
-#### 4. TTS 缓存
-- **实现方式**：ttsCache Map
-- **工作原理**：
-  - 使用 LRU 缓存策略
-  - 缓存键为 `音色:文本`
-  - 最大缓存 100 条
-  - 相同文本直接返回缓存音频
-- **节省效果**：约 30% TTS 调用次数
-
-#### 5. 上下文裁剪
-- **实现方式**：conversationHistory 数组
-- **工作原理**：
-  - 保留最近 5 轮对话（10 条消息）
-  - 超出部分自动裁剪
-  - 发送完整上下文到 Vision API
-- **节省效果**：控制 token 增长，避免超出限制
-
----
-
-## 三、技术架构
-
-### 系统架构图
-
-![mermaid-diagram](./docs/mermaid-diagram.png)
-
-### 技术栈
-
-| 层级 | 技术 | 说明 |
+| 技术 | 版本 | 说明 |
 |------|------|------|
-| 前端框架 | React 18 + TypeScript | 生态成熟，类型安全 |
-| UI 组件 | Tailwind CSS + Lucide Icons | 轻量、现代化 |
-| 音视频采集 | WebRTC (MediaStream API) | 浏览器原生 |
-| 音频处理 | Web Audio API + MediaRecorder | VAD + 录音 |
-| 实时通信 | WebSocket | 双向低延迟 |
-| 后端框架 | Node.js + Express | 异步 I/O |
-| AI 服务 | Mimo API | OpenAI 兼容格式 |
+| [React](https://react.dev/) | 18.3 | 用户界面构建库 |
+| [TypeScript](https://www.typescriptlang.org/) | 5.5 | 类型安全的 JavaScript 超集 |
+| [Vite](https://vitejs.dev/) | 5.4 | 下一代前端构建工具 |
+| [Tailwind CSS](https://tailwindcss.com/) | 3.4 | 实用优先的 CSS 框架 |
+| [Lucide React](https://lucide.dev/) | 0.460 | 精美的开源图标库 |
+| [Axios](https://axios-http.com/) | 1.7 | HTTP 客户端 |
 
-### 模型使用
+### 后端
 
-| 用途 | 模型 | 说明 |
+| 技术 | 版本 | 说明 |
 |------|------|------|
-| 语音识别 | mimo-v2.5-asr | 音频转文本 |
-| 视觉理解 | mimo-v2.5 | 多模态理解 |
-| 语音合成 | mimo-v2.5-tts | 文本转语音 |
+| [Node.js](https://nodejs.org/) | >= 18 | JavaScript 运行时 |
+| [Express](https://expressjs.com/) | 4.21 | Web 应用框架 |
+| [ws](https://github.com/websockets/ws) | 8.18 | WebSocket 库 |
+| [dotenv](https://github.com/motdotla/dotenv) | 16.4 | 环境变量管理 |
+| [cors](https://github.com/expressjs/cors) | 2.8 | 跨域资源共享 |
+| [uuid](https://github.com/uuidjs/uuid) | 10.0 | 唯一标识符生成 |
 
----
+### AI 服务
 
-## 四、项目结构
+| 模型 | 用途 | 说明 |
+|------|------|------|
+| mimo-v2.5 | 视觉理解 | 多模态视觉分析 |
+| mimo-v2.5-asr | 语音识别 | 音频转文本 |
+| mimo-v2.5-tts | 语音合成 | 文本转语音 |
 
-```
-Rui-Visual-Assistant/
-├── client/                     # 前端 React 应用
-│   ├── src/
-│   │   ├── components/         # UI 组件
-│   │   │   ├── VideoCapture.tsx
-│   │   │   ├── ChatPanel.tsx
-│   │   │   ├── ControlBar.tsx
-│   │   │   └── SettingsPanel.tsx
-│   │   ├── hooks/              # 自定义 Hooks
-│   │   │   ├── useCamera.ts
-│   │   │   ├── useMicrophone.ts
-│   │   │   ├── useWebSocket.ts
-│   │   │   ├── useSmartSampling.ts
-│   │   │   └── useAudioPlayer.ts
-│   │   ├── services/           # 服务层
-│   │   │   ├── websocket.ts
-│   │   │   └── api.ts
-│   │   ├── utils/              # 工具函数
-│   │   │   ├── audio.ts
-│   │   │   ├── image.ts
-│   │   │   └── vad.ts
-│   │   ├── types/              # TypeScript 类型
-│   │   │   └── index.ts
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   └── package.json
-├── server/                     # 后端 Node.js 应用
-│   ├── src/
-│   │   ├── routes/             # 路由
-│   │   │   └── api.ts
-│   │   ├── services/           # 服务层
-│   │   │   ├── mimo.ts
-│   │   │   ├── asr.ts
-│   │   │   ├── vision.ts
-│   │   │   └── tts.ts
-│   │   ├── websocket/          # WebSocket 处理
-│   │   │   └── handler.ts
-│   │   ├── types/              # TypeScript 类型
-│   │   │   └── index.ts
-│   │   └── index.ts
-│   └── package.json
-├── .env                        # 环境变量
-├── .gitignore
-├── package.json
-├── 设计文档.md
-└── PR提交规范.md
-```
+### 浏览器 API
 
----
+| API | 用途 |
+|-----|------|
+| WebRTC (MediaStream) | 摄像头/麦克风访问 |
+| Web Audio API | 音频处理与 VAD |
+| WebSocket | 实时双向通信 |
+| Canvas API | 视频帧捕获与压缩 |
 
-## 五、PR 提交记录
-
-| PR # | 标题 | 分支 | 状态 | 链接 |
-|------|------|------|------|------|
-| PR1 | feat: 添加设置面板功能 | feat/settings-panel | ✅ 已合并 | [#1](https://github.com/RuiYier/Rui-Visual-Assistant/pull/1) |
-| PR2 | feat: 实现智能帧采样功能 | feat/smart-sampling | ✅ 已合并 | [#2](https://github.com/RuiYier/Rui-Visual-Assistant/pull/2) |
-| PR3 | feat: 完善 TTS 音色管理与 API 接口 | feat/tts-context | ✅ 已合并 | [#3](https://github.com/RuiYier/Rui-Visual-Assistant/pull/3) |
-| PR4 | feat: 实现移动端适配与全屏功能 | feat/mobile-screenshot | ✅ 已合并 | [#4](https://github.com/RuiYier/Rui-Visual-Assistant/pull/4) |
-| PR5 | docs: 添加设计文档 | docs/design-document | ✅ 已合并 | [#5](https://github.com/RuiYier/Rui-Visual-Assistant/pull/5) |
-| PR6 | feat: 完善错误处理与稳定性 | feat/error-handling | ✅ 已合并 | [#6](https://github.com/RuiYier/Rui-Visual-Assistant/pull/6) |
-| PR7 | feat: 添加性能监控功能 | feat/performance-monitoring | ✅ 已合并 | [#7](https://github.com/RuiYier/Rui-Visual-Assistant/pull/7) |
-| PR8 | feat: 添加对话历史导出功能 | feat/export-history | ✅ 已合并 | [#8](https://github.com/RuiYier/Rui-Visual-Assistant/pull/8) |
-
----
-
-## 六、部署说明
+## 📦 安装与运行
 
 ### 环境要求
 
 - Node.js >= 18
 - npm >= 9
+- 现代浏览器（Chrome、Firefox、Safari、Edge）
 
 ### 安装步骤
 
@@ -210,7 +75,8 @@ cd Rui-Visual-Assistant
 npm run install:all
 
 # 3. 配置环境变量
-# 编辑 .env 文件，配置 Mimo API Key
+# 复制 .env.example 为 .env，填入你的 API Key
+cp .env.example .env
 
 # 4. 启动开发服务器
 npm run dev
@@ -222,5 +88,141 @@ npm run dev
 - 后端 API：http://localhost:3001
 - WebSocket：ws://localhost:3002
 
----
+## 📁 项目结构
 
+```
+Rui-Visual-Assistant/
+├── client/                     # 前端 React 应用
+│   ├── public/                 # 静态资源
+│   │   └── favicon.svg         # 网站图标
+│   ├── src/
+│   │   ├── components/         # UI 组件
+│   │   │   ├── VideoCapture.tsx    # 视频捕获组件
+│   │   │   ├── ChatPanel.tsx       # 聊天面板组件
+│   │   │   ├── ControlBar.tsx      # 控制栏组件
+│   │   │   ├── SettingsPanel.tsx   # 设置面板组件
+│   │   │   └── PerformanceMonitor.tsx # 性能监控组件
+│   │   ├── hooks/              # 自定义 Hooks
+│   │   │   ├── useCamera.ts        # 摄像头控制
+│   │   │   ├── useMicrophone.ts    # 麦克风控制
+│   │   │   ├── useWebSocket.ts     # WebSocket 通信
+│   │   │   ├── useSmartSampling.ts # 智能采样
+│   │   │   └── useKeyboardShortcuts.ts # 快捷键
+│   │   ├── services/           # 服务层
+│   │   │   ├── websocket.ts        # WebSocket 客户端
+│   │   │   └── api.ts              # API 接口
+│   │   ├── utils/              # 工具函数
+│   │   │   ├── audio.ts            # 音频处理
+│   │   │   ├── image.ts            # 图片处理
+│   │   │   ├── vad.ts              # 语音活动检测
+│   │   │   └── performance.ts      # 性能监控
+│   │   ├── types/              # TypeScript 类型
+│   │   │   └── index.ts
+│   │   ├── App.tsx             # 主应用组件
+│   │   ├── main.tsx            # 入口文件
+│   │   └── index.css           # 全局样式
+│   ├── tailwind.config.js      # Tailwind 配置
+│   ├── tsconfig.json           # TypeScript 配置
+│   ├── vite.config.ts          # Vite 配置
+│   └── package.json
+├── server/                     # 后端 Node.js 应用
+│   ├── src/
+│   │   ├── routes/             # API 路由
+│   │   │   └── api.ts
+│   │   ├── services/           # 业务服务
+│   │   │   ├── mimo.ts             # Mimo API 封装
+│   │   │   ├── asr.ts              # 语音识别服务
+│   │   │   ├── vision.ts           # 视觉理解服务
+│   │   │   └── tts.ts              # 语音合成服务
+│   │   ├── websocket/          # WebSocket 处理
+│   │   │   └── handler.ts
+│   │   ├── types/              # TypeScript 类型
+│   │   │   └── index.ts
+│   │   └── index.ts            # 服务器入口
+│   ├── tsconfig.json
+│   └── package.json
+├── .env                        # 环境变量（不提交）
+├── .env.example                # 环境变量示例
+├── .gitignore
+├── package.json                # 根 package.json
+└── README.md
+```
+
+## 🔧 环境变量
+
+创建 `.env` 文件并配置以下变量：
+
+```env
+# Mimo API 配置
+MIMO_API_KEY=your_api_key_here
+MIMO_API_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1
+
+# 服务器端口
+PORT=3001
+WS_PORT=3002
+```
+
+## 📖 使用说明
+
+### 基本操作
+
+1. **开启摄像头** - 点击控制栏的摄像头按钮
+2. **开启麦克风** - 点击控制栏的麦克风按钮
+3. **开始对话** - 对着摄像头说话，AI 会自动识别并回复
+4. **截图分析** - 点击截图按钮让 AI 分析当前画面
+5. **切换音色** - 在设置中选择不同的 AI 音色
+
+### 快捷键
+
+| 快捷键 | 功能 |
+|--------|------|
+| `Ctrl + K` | 开启/关闭摄像头 |
+| `Ctrl + M` | 开启/关闭麦克风 |
+| `Ctrl + S` | 截图分析 |
+| `Ctrl + L` | 清空对话 |
+| `Ctrl + ,` | 打开设置 |
+
+### 成本控制
+
+- **智能采样** - 对话时使用高帧率，静默时自动降低
+- **静音检测** - 静音时暂停音频处理
+- **图片压缩** - 自动压缩到 720p，JPEG 60% 质量
+- **TTS 缓存** - 相同文本缓存音频，避免重复调用
+- **上下文裁剪** - 保留最近 5 轮对话，控制 token 增长
+
+## 🧪 测试
+
+```bash
+# 运行所有测试
+npm test
+
+# 运行前端测试
+npm run test:client
+
+# 运行后端测试
+npm run test:server
+
+# 生成覆盖率报告
+npm run test:coverage
+```
+
+## 📝 PR 提交记录
+
+| PR # | 标题 | 状态 |
+|------|------|------|
+| PR1 | feat: 添加设置面板功能 | ✅ 已合并 |
+| PR2 | feat: 实现智能帧采样功能 | ✅ 已合并 |
+| PR3 | feat: 完善 TTS 音色管理与 API 接口 | ✅ 已合并 |
+| PR4 | feat: 实现移动端适配与全屏功能 | ✅ 已合并 |
+| PR5 | docs: 添加设计文档 | ✅ 已合并 |
+| PR6 | feat: 完善错误处理与稳定性 | ✅ 已合并 |
+| PR7 | feat: 添加性能监控功能 | ✅ 已合并 |
+| PR8 | feat: 添加对话历史导出功能 | ✅ 已合并 |
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## 📄 许可证
+
+MIT License
