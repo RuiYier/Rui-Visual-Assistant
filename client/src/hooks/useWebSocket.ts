@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { wsService } from '../services/websocket';
 import { ServerMessage, ChatMessage } from '../types';
+import { performanceMonitor } from '../utils/performance';
 
 export function useWebSocket() {
   const [isConnected, setIsConnected] = useState(false);
@@ -10,6 +11,7 @@ export function useWebSocket() {
   const [isProcessing, setIsProcessing] = useState(false);
   const audioQueueRef = useRef<string[]>([]);
   const isPlayingRef = useRef(false);
+  const requestTimeRef = useRef<number>(0);
 
   useEffect(() => {
     wsService.connect();
@@ -38,6 +40,12 @@ export function useWebSocket() {
       if (message.isFinal) {
         setCurrentResponse('');
         setIsProcessing(false);
+        performanceMonitor.recordApiCall();
+        if (requestTimeRef.current > 0) {
+          const latency = Date.now() - requestTimeRef.current;
+          performanceMonitor.recordLatency(latency);
+          requestTimeRef.current = 0;
+        }
         setMessages((prev) => [
           ...prev,
           {
@@ -60,6 +68,7 @@ export function useWebSocket() {
 
     const handleError = (message: ServerMessage) => {
       console.error('Server error:', message.data);
+      performanceMonitor.recordError();
       setIsProcessing(false);
     };
 
@@ -110,6 +119,7 @@ export function useWebSocket() {
   }, []);
 
   const sendVideoFrame = useCallback((base64: string) => {
+    performanceMonitor.recordFrame();
     wsService.send({
       type: 'video_frame',
       data: base64,
@@ -118,6 +128,7 @@ export function useWebSocket() {
   }, []);
 
   const sendAudioChunk = useCallback((base64: string, mimeType?: string) => {
+    requestTimeRef.current = Date.now();
     wsService.send({
       type: 'audio_chunk',
       data: base64,

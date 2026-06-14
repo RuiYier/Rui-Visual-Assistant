@@ -24,8 +24,6 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      const isCtrlOrCmd = event.ctrlKey || event.metaKey;
-
       switch (event.key.toLowerCase()) {
         case 'c':
           onToggleCamera?.();

@@ -114,6 +114,48 @@ P0: MVP 核心功能  |  P1: 重要功能扩展  |  P2: 体验优化完善  |  P
 | 后端框架 | Node.js + Express | 异步 I/O |
 | AI 服务 | Mimo API | OpenAI 兼容格式 |
 
+### 第三方依赖
+
+#### 前端依赖
+
+| 包名 | 版本 | 用途 |
+|------|------|------|
+| react | ^18.3.1 | UI 构建库 |
+| react-dom | ^18.3.1 | React DOM 渲染 |
+| typescript | ~5.5.4 | 类型检查 |
+| vite | ^5.4.2 | 构建工具 |
+| tailwindcss | ^3.4.10 | CSS 框架 |
+| lucide-react | ^0.460.0 | 图标库 |
+| axios | ^1.7.5 | HTTP 请求 |
+| @vitejs/plugin-react | ^4.3.1 | Vite React 插件 |
+| autoprefixer | ^10.4.20 | CSS 兼容 |
+| postcss | ^8.4.41 | CSS 处理 |
+
+#### 后端依赖
+
+| 包名 | 版本 | 用途 |
+|------|------|------|
+| express | ^4.21.0 | Web 框架 |
+| ws | ^8.18.0 | WebSocket 服务 |
+| cors | ^2.8.5 | 跨域处理 |
+| dotenv | ^16.4.5 | 环境变量 |
+| uuid | ^10.0.0 | 唯一 ID 生成 |
+| typescript | ~5.5.4 | 类型检查 |
+| ts-node | ^10.9.2 | TS 运行 |
+| @types/express | ^4.17.21 | Express 类型 |
+| @types/ws | ^8.5.12 | WS 类型 |
+| @types/cors | ^2.8.17 | CORS 类型 |
+| @types/uuid | ^10.0.0 | UUID 类型 |
+
+#### 测试依赖
+
+| 包名 | 版本 | 用途 |
+|------|------|------|
+| vitest | ^3.1.1 | 测试框架 |
+| @testing-library/react | ^16.3.0 | React 测试 |
+| @testing-library/jest-dom | ^6.6.3 | DOM 断言 |
+| jsdom | ^26.1.0 | 测试环境 |
+
 ### 模型使用
 
 | 用途 | 模型 | 说明 |
@@ -190,6 +232,26 @@ Rui-Visual-Assistant/
 | PR7 | feat: 添加性能监控功能 | feat/performance-monitoring | ✅ 已合并 | [#7](https://github.com/RuiYier/Rui-Visual-Assistant/pull/7) |
 | PR8 | feat: 添加对话历史导出功能 | feat/export-history | ✅ 已合并 | [#8](https://github.com/RuiYier/Rui-Visual-Assistant/pull/8) |
 
+### 主要提交记录
+
+| 提交 | 说明 |
+|------|------|
+| fix: 修复语音识别和语音合成问题 | 修复 ASR/TTS API 调用格式，添加水词过滤和音频检测 |
+| style: 优化 UI 设计，提升视觉体验 | 更换 favicon，优化配色方案，添加动画效果 |
+| docs: 更新 README 文档，完善项目说明 | 补充依赖列表和功能说明 |
+| fix: 简化快捷键为单按键，避免冲突 | 改用单按键快捷键，避免与浏览器冲突 |
+
+### 快捷键说明
+
+| 按键 | 功能 |
+|------|------|
+| C | 开启/关闭摄像头 |
+| M | 开启/关闭麦克风 |
+| S | 截图分析 |
+| D | 清空对话 |
+| P | 打开/关闭设置 |
+| Esc | 关闭设置面板 |
+
 ---
 
 ## 六、部署说明
@@ -208,12 +270,30 @@ cd Rui-Visual-Assistant
 
 # 2. 安装依赖
 npm run install:all
+# 或分别安装
+cd client && npm install
+cd ../server && npm install
 
 # 3. 配置环境变量
-# 编辑 .env 文件，配置 Mimo API Key
+# 复制示例文件并编辑
+cp .env.example .env
+# 编辑 .env 文件，填入你的 Mimo API Key：
+# MIMO_API_KEY=your_api_key_here
+# MIMO_API_BASE_URL=https://token-plan-cn.xiaomimimo.com/v1
+# PORT=3001
+# WS_PORT=3002
 
 # 4. 启动开发服务器
 npm run dev
+# 或分别启动
+cd client && npm run dev    # 前端 - 端口 5173
+cd server && npm run dev    # 后端 - 端口 3001/3002
+
+# 5. 运行测试
+npm test                    # 运行所有测试
+npm run test:client         # 前端测试
+npm run test:server         # 后端测试
+npm run test:coverage       # 覆盖率报告
 ```
 
 ### 访问应用
@@ -221,6 +301,19 @@ npm run dev
 - 前端：http://localhost:5173
 - 后端 API：http://localhost:3001
 - WebSocket：ws://localhost:3002
+
+### 生产构建
+
+```bash
+# 构建前端
+cd client && npm run build
+
+# 构建后端
+cd server && npm run build
+
+# 启动生产服务
+cd server && npm start
+```
 
 ---
 
