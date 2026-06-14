@@ -21,7 +21,7 @@ export function useWebSocket() {
 
     const handleTranscript = (message: ServerMessage) => {
       if (message.isFinal) {
-        setCurrentTranscript(message.data);
+        setCurrentTranscript('');
         // 添加用户消息
         setMessages((prev) => [
           ...prev,
@@ -121,11 +121,12 @@ export function useWebSocket() {
     });
   }, []);
 
-  const sendAudioChunk = useCallback((base64: string) => {
+  const sendAudioChunk = useCallback((base64: string, mimeType?: string) => {
     wsService.send({
       type: 'audio_chunk',
       data: base64,
       timestamp: Date.now(),
+      mimeType: mimeType,
     });
   }, []);
 

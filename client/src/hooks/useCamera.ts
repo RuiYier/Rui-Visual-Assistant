@@ -11,18 +11,23 @@ const defaultConfig: CameraConfig = {
 export function useCamera(config: CameraConfig = defaultConfig) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>(config.facingMode);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (mode?: 'user' | 'environment') => {
     try {
       setError(null);
+      const currentMode = mode || facingMode;
+
+      // Update facingMode immediately
+      setFacingMode(currentMode);
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: config.width },
           height: { ideal: config.height },
-          facingMode: config.facingMode,
+          facingMode: currentMode,
         },
         audio: false,
       });
@@ -37,7 +42,7 @@ export function useCamera(config: CameraConfig = defaultConfig) {
       setError(message);
       console.error('Camera error:', err);
     }
-  }, [config]);
+  }, [config, facingMode]);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -60,10 +65,10 @@ export function useCamera(config: CameraConfig = defaultConfig) {
   }, [isStreaming]);
 
   const switchCamera = useCallback(async () => {
-    const newFacingMode = config.facingMode === 'user' ? 'environment' : 'user';
+    const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
     stopCamera();
-    await startCamera();
-  }, [config.facingMode, stopCamera, startCamera]);
+    await startCamera(newFacingMode);
+  }, [facingMode, stopCamera, startCamera]);
 
   useEffect(() => {
     return () => {
@@ -75,6 +80,7 @@ export function useCamera(config: CameraConfig = defaultConfig) {
     videoRef,
     isStreaming,
     error,
+    facingMode,
     startCamera,
     stopCamera,
     captureFrame,

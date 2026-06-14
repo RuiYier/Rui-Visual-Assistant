@@ -3,6 +3,7 @@ export interface ClientMessage {
   type: 'video_frame' | 'audio_chunk' | 'screenshot' | 'config';
   data: string;  // Base64 编码 或 JSON 配置
   timestamp: number;
+  mimeType?: string;  // 音频 MIME 类型
 }
 
 export interface ServerMessage {

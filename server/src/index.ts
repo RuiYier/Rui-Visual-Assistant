@@ -3,11 +3,21 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { handleWebSocket } from './websocket/handler.js';
 import apiRoutes from './routes/api.js';
 
-// 加载环境变量
-dotenv.config({ path: '../.env' });
+// 获取当前文件目录
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 加载环境变量（从项目根目录）
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+console.log('Loading .env from:', path.resolve(__dirname, '../../.env'));
+console.log('MIMO_API_KEY:', process.env.MIMO_API_KEY ? 'loaded' : 'not found');
+console.log('MIMO_API_BASE_URL:', process.env.MIMO_API_BASE_URL);
 
 const app = express();
 const PORT = process.env.PORT || 3001;

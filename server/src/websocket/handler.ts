@@ -21,6 +21,10 @@ export function handleWebSocket(ws: WebSocket) {
   let isAlive = true;
   let heartbeatTimer: NodeJS.Timeout;
 
+  // 清空对话历史
+  conversationHistory = [];
+  console.log('Conversation history cleared');
+
   // 心跳检测
   const startHeartbeat = () => {
     heartbeatTimer = setInterval(() => {
@@ -74,7 +78,7 @@ export function handleWebSocket(ws: WebSocket) {
 async function handleMessage(ws: WebSocket, message: ClientMessage) {
   switch (message.type) {
     case 'audio_chunk':
-      await handleAudioChunk(ws, message.data);
+      await handleAudioChunk(ws, message.data, message.mimeType);
       break;
     case 'video_frame':
       // 视频帧单独处理时，存储最新帧
@@ -91,14 +95,22 @@ async function handleMessage(ws: WebSocket, message: ClientMessage) {
   }
 }
 
-async function handleAudioChunk(ws: WebSocket, audioBase64: string) {
+async function handleAudioChunk(ws: WebSocket, audioBase64: string, mimeType?: string) {
   try {
+    console.log('=== handleAudioChunk Start ===');
+    console.log('Audio base64 length:', audioBase64.length);
+    console.log('Audio base64 prefix:', audioBase64.substring(0, 50));
+    console.log('MIME type:', mimeType);
+
     // 1. ASR 语音识别
     sendJSON(ws, { type: 'transcript', data: '正在识别...', isFinal: false });
 
-    const transcript = await processAudio(audioBase64);
+    const transcript = await processAudio(audioBase64, mimeType);
+
+    console.log('ASR transcript:', transcript);
 
     if (!transcript || transcript.trim().length === 0) {
+      console.log('Empty transcript, skipping');
       return; // 静音，不处理
     }
 
@@ -106,6 +118,8 @@ async function handleAudioChunk(ws: WebSocket, audioBase64: string) {
 
     // 2. 获取最新视频帧
     const videoFrame = globalThis.lastVideoFrame;
+    console.log('Video frame available:', !!videoFrame);
+    console.log('Video frame length:', videoFrame ? videoFrame.length : 0);
 
     // 3. 调用 Vision API
     sendJSON(ws, { type: 'response', data: '正在思考...', isFinal: false });
@@ -133,8 +147,13 @@ async function handleAudioChunk(ws: WebSocket, audioBase64: string) {
       });
     }
   } catch (error) {
-    console.error('Error handling audio:', error);
-    sendJSON(ws, { type: 'error', data: '处理音频时出错' });
+    console.error('=== handleAudioChunk Error ===');
+    console.error('Error:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    sendJSON(ws, { type: 'error', data: '处理音频时出错: ' + (error instanceof Error ? error.message : '未知错误') });
   }
 }
 

@@ -62,6 +62,12 @@ function App() {
 
   const vadRef = useRef<VoiceActivityDetector | null>(null);
   const isSpeakingRef = useRef(false);
+  const isCameraOnRef = useRef(false);
+  const isConnectedRef = useRef(false);
+
+  // 同步 ref
+  useEffect(() => { isCameraOnRef.current = isCameraOn; }, [isCameraOn]);
+  useEffect(() => { isConnectedRef.current = isConnected; }, [isConnected]);
 
   // 智能采样
   const {
@@ -73,21 +79,22 @@ function App() {
     stopSampling,
   } = useSmartSampling({
     activeRate: samplingRate,
-    idleRate: samplingRate * 0.2, // 空闲时为活跃时的 20%
+    idleRate: samplingRate * 0.2,
     transitionDelay: 3000,
   });
 
   // 视频帧采样
   const startFrameSampling = useCallback(() => {
     startSampling(() => {
-      if (isCameraOn && isConnected) {
+      if (isCameraOnRef.current && isConnectedRef.current) {
         const frame = captureFrame();
         if (frame) {
+          console.log('Sending video frame, size:', (frame.length / 1024).toFixed(2), 'KB');
           sendVideoFrame(frame);
         }
       }
     });
-  }, [isCameraOn, isConnected, captureFrame, sendVideoFrame, startSampling]);
+  }, [captureFrame, sendVideoFrame, startSampling]);
 
   const stopFrameSampling = useCallback(() => {
     stopSampling();
@@ -100,6 +107,7 @@ function App() {
       stopFrameSampling();
     } else {
       await startCamera();
+      console.log('Camera started, starting frame sampling...');
       startFrameSampling();
     }
   }, [isCameraOn, startCamera, stopCamera, startFrameSampling, stopFrameSampling]);
