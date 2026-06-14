@@ -69,8 +69,6 @@ function App() {
   useEffect(() => { isConnectedRef.current = isConnected; }, [isConnected]);
 
   const {
-    currentRate,
-    isActive: isSamplingActive,
     setActive: setSamplingActive,
     setIdle: setSamplingIdle,
     startSampling,
@@ -202,14 +200,6 @@ function App() {
               <StatusIndicator active={isCameraOn} label="摄像头" />
               <StatusIndicator active={isMicOn} label="麦克风" />
               <StatusIndicator active={isConnected} label="服务器" />
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-all duration-200 ${
-                isSamplingActive
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'bg-gray-100 text-gray-400'
-              }`}>
-                <div className={`w-1.5 h-1.5 rounded-full ${isSamplingActive ? 'bg-blue-500 animate-pulse-soft' : 'bg-gray-300'}`} />
-                <span className="text-xs font-medium">采样 {currentRate.toFixed(1)} fps</span>
-              </div>
             </div>
             {(cameraError || micError) && (
               <p className="text-red-500 text-sm mt-2 animate-fade-in">

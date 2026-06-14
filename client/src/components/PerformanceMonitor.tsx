@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Zap, Clock, Database, AlertTriangle, X } from 'lucide-react';
+import { Activity, Clock, Database, X } from 'lucide-react';
 import { performanceMonitor } from '../utils/performance';
 
 interface PerformanceMonitorProps {
@@ -7,23 +7,35 @@ interface PerformanceMonitorProps {
   onToggle: () => void;
 }
 
+const MIMO_API_URL = 'https://token-plan-cn.xiaomimimo.com/v1/models';
+
 export function PerformanceMonitor({ isVisible, onToggle }: PerformanceMonitorProps) {
   const [metrics, setMetrics] = useState({
-    fps: 0,
     latency: 0,
     apiCalls: 0,
     cacheHits: 0,
-    errors: 0,
   });
 
   useEffect(() => {
     if (!isVisible) return;
 
-    const interval = setInterval(() => {
+    // 立即测试一次延迟
+    performanceMonitor.testLatency(MIMO_API_URL);
+
+    // 每秒更新指标
+    const metricsInterval = setInterval(() => {
       setMetrics(performanceMonitor.getMetrics());
     }, 1000);
 
-    return () => clearInterval(interval);
+    // 每 5 秒测试一次延迟
+    const latencyInterval = setInterval(() => {
+      performanceMonitor.testLatency(MIMO_API_URL);
+    }, 5000);
+
+    return () => {
+      clearInterval(metricsInterval);
+      clearInterval(latencyInterval);
+    };
   }, [isVisible]);
 
   if (!isVisible) {
@@ -59,19 +71,11 @@ export function PerformanceMonitor({ isVisible, onToggle }: PerformanceMonitorPr
       {/* 指标 */}
       <div className="space-y-2">
         <MetricItem
-          icon={<Zap className="w-3.5 h-3.5" />}
-          label="FPS"
-          value={metrics.fps}
-          status={metrics.fps > 20 ? 'good' : metrics.fps > 10 ? 'warning' : 'danger'}
-          suffix=""
-        />
-
-        <MetricItem
           icon={<Clock className="w-3.5 h-3.5" />}
-          label="延迟"
+          label="API 延迟"
           value={metrics.latency}
-          status={metrics.latency < 100 ? 'good' : metrics.latency < 200 ? 'warning' : 'danger'}
-          suffix="ms"
+          status={metrics.latency < 0 ? 'danger' : metrics.latency < 100 ? 'good' : metrics.latency < 200 ? 'warning' : 'danger'}
+          suffix={metrics.latency < 0 ? ' (失败)' : 'ms'}
         />
 
         <MetricItem
@@ -87,14 +91,6 @@ export function PerformanceMonitor({ isVisible, onToggle }: PerformanceMonitorPr
           label="缓存命中"
           value={metrics.cacheHits}
           status="good"
-          suffix=""
-        />
-
-        <MetricItem
-          icon={<AlertTriangle className="w-3.5 h-3.5" />}
-          label="错误"
-          value={metrics.errors}
-          status={metrics.errors === 0 ? 'good' : 'danger'}
           suffix=""
         />
       </div>
