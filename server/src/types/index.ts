@@ -12,7 +12,7 @@ export interface ServerMessage {
 }
 
 export interface ContextMessage {
-  role: 'user' | 'assistant';
+  role: 'system' | 'user' | 'assistant';
   content: string | ContentPart[];
 }
 

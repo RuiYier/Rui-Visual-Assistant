@@ -1,10 +1,10 @@
 import { WebSocket } from 'ws';
-import { ClientMessage, ServerMessage } from '../types/index.js';
+import { ClientMessage, ServerMessage, ContextMessage } from '../types/index.js';
 import { processAudio } from '../services/asr.js';
 import { processVision } from '../services/vision.js';
 import { synthesizeSpeech, setTTSConfig } from '../services/tts.js';
 
-let conversationHistory: Array<{ role: 'user' | 'assistant'; content: any }> = [];
+let conversationHistory: ContextMessage[] = [];
 const MAX_CONTEXT_TURNS = 5;
 
 let clientConfig = {
