@@ -17,7 +17,6 @@ export function useKeyboardShortcuts({
 }: KeyboardShortcuts) {
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      // 忽略输入框中的快捷键
       if (
         event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLTextAreaElement
@@ -25,25 +24,20 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      // Ctrl/Cmd + 组合键
       const isCtrlOrCmd = event.ctrlKey || event.metaKey;
 
       switch (event.key.toLowerCase()) {
         case 'c':
-          if (isCtrlOrCmd) return; // 不拦截复制
-          onToggleCamera?.();
+          if (!isCtrlOrCmd) onToggleCamera?.();
           break;
         case 'm':
-          if (isCtrlOrCmd) return; // 不拦截最小化
-          onToggleMic?.();
+          if (!isCtrlOrCmd) onToggleMic?.();
           break;
         case 's':
-          if (isCtrlOrCmd) return; // 不拦截保存
-          onScreenshot?.();
+          if (!isCtrlOrCmd) onScreenshot?.();
           break;
         case 'd':
-          if (isCtrlOrCmd) return; // 不拦截书签
-          onClearMessages?.();
+          if (!isCtrlOrCmd) onClearMessages?.();
           break;
         case ',':
           if (isCtrlOrCmd) {
@@ -52,7 +46,6 @@ export function useKeyboardShortcuts({
           }
           break;
         case 'escape':
-          // ESC 关闭设置面板
           onToggleSettings?.();
           break;
       }

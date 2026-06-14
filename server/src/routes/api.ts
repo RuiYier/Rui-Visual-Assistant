@@ -3,35 +3,33 @@ import { getTTSConfig, clearTTSCache } from '../services/tts.js';
 
 const router = Router();
 
-// 健康检查
-router.get('/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+router.get('/health', (_req: Request, res: Response) => {
+  res.json({ status: 'ok' });
 });
 
-// 获取 TTS 音色列表
-router.get('/voices', (req: Request, res: Response) => {
-  const voices = [
-    { id: 'alloy', name: 'Alloy', description: '中性、平衡', gender: 'neutral' },
-    { id: 'echo', name: 'Echo', description: '男性、沉稳', gender: 'male' },
-    { id: 'fable', name: 'Fable', description: '男性、温暖', gender: 'male' },
-    { id: 'onyx', name: 'Onyx', description: '男性、深沉', gender: 'male' },
-    { id: 'nova', name: 'Nova', description: '女性、活泼', gender: 'female' },
-    { id: 'shimmer', name: 'Shimmer', description: '女性、柔和', gender: 'female' },
-  ];
-
-  res.json({ voices });
+router.get('/voices', (_req: Request, res: Response) => {
+  res.json({
+    voices: [
+      { id: 'mimo_default', name: 'MiMo默认', description: '默认音色' },
+      { id: '冰糖', name: '冰糖', description: '中文女性' },
+      { id: '茉莉', name: '茉莉', description: '中文女性' },
+      { id: '苏打', name: '苏打', description: '中文男性' },
+      { id: '白桦', name: '白桦', description: '中文男性' },
+      { id: 'Mia', name: 'Mia', description: '英文女性' },
+      { id: 'Chloe', name: 'Chloe', description: '英文女性' },
+      { id: 'Milo', name: 'Milo', description: '英文男性' },
+      { id: 'Dean', name: 'Dean', description: '英文男性' },
+    ],
+  });
 });
 
-// 获取当前 TTS 配置
-router.get('/tts/config', (req: Request, res: Response) => {
-  const config = getTTSConfig();
-  res.json({ config });
+router.get('/tts/config', (_req: Request, res: Response) => {
+  res.json({ config: getTTSConfig() });
 });
 
-// 清除 TTS 缓存
-router.post('/tts/clear-cache', (req: Request, res: Response) => {
+router.post('/tts/clear-cache', (_req: Request, res: Response) => {
   clearTTSCache();
-  res.json({ success: true, message: 'TTS 缓存已清除' });
+  res.json({ success: true });
 });
 
 export default router;

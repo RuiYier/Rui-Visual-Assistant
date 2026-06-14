@@ -19,8 +19,6 @@ export function useCamera(config: CameraConfig = defaultConfig) {
     try {
       setError(null);
       const currentMode = mode || facingMode;
-
-      // Update facingMode immediately
       setFacingMode(currentMode);
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -38,9 +36,7 @@ export function useCamera(config: CameraConfig = defaultConfig) {
         setIsStreaming(true);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : '无法访问摄像头';
-      setError(message);
-      console.error('Camera error:', err);
+      setError(err instanceof Error ? err.message : '无法访问摄像头');
     }
   }, [config, facingMode]);
 

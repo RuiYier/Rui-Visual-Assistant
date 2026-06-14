@@ -33,7 +33,6 @@ export function SettingsPanel({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
       <div className="bg-white rounded-lg shadow-xl w-96 max-h-[80vh] overflow-y-auto">
-        {/* 标题 */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5" />
@@ -47,9 +46,7 @@ export function SettingsPanel({
           </button>
         </div>
 
-        {/* 设置内容 */}
         <div className="p-6 space-y-6">
-          {/* TTS 音色选择 */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
               <Volume2 className="w-4 h-4" />
@@ -73,7 +70,6 @@ export function SettingsPanel({
             </div>
           </div>
 
-          {/* 采样频率 */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-3">
               视频帧采样频率
@@ -100,16 +96,15 @@ export function SettingsPanel({
             </div>
           </div>
 
-          {/* 成本控制提示 */}
           <div className="p-4 bg-yellow-50 rounded-lg">
             <h3 className="text-sm font-medium text-yellow-800 mb-2">
-              💡 成本控制提示
+              成本控制提示
             </h3>
             <ul className="text-xs text-yellow-700 space-y-1">
-              <li>• 降低采样频率可减少 API 调用次数</li>
-              <li>• 不说话时系统会自动暂停处理</li>
-              <li>• 图片已自动压缩至 720p</li>
-              <li>• TTS 音频会自动缓存</li>
+              <li>- 降低采样频率可减少 API 调用次数</li>
+              <li>- 不说话时系统会自动暂停处理</li>
+              <li>- 图片已自动压缩至 720p</li>
+              <li>- TTS 音频会自动缓存</li>
             </ul>
           </div>
         </div>

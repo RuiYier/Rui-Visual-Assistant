@@ -7,10 +7,8 @@ export async function processVision(
   history: ContextMessage[] = []
 ): Promise<string> {
   try {
-    // 构建消息内容
     const content: ContentPart[] = [{ type: 'text', text }];
 
-    // 如果有图片，添加到内容中
     if (imageBase64) {
       content.push({
         type: 'image_url',
@@ -20,19 +18,24 @@ export async function processVision(
       });
     }
 
-    // 构建完整的消息列表
     const messages: ContextMessage[] = [
       {
         role: 'system',
         content: `你是一个AI视觉对话助手。你可以看到用户的摄像头画面，并与用户进行自然对话。
-请用简洁、自然的中文回复。如果看到图片，请描述图片中的内容。
-保持回复友好、有帮助。回复长度控制在100字以内，除非用户要求详细解释。`,
+
+要求：
+1. 用简洁、自然的口语化中文回复
+2. 不要使用任何 emoji 表情符号
+3. 不要使用 markdown 格式
+4. 直接输出纯文本，像正常说话一样
+5. 回复长度控制在 100 字以内
+6. 如果看到画面，请自然地描述你看到的内容
+7. 像朋友聊天一样轻松自然`,
       },
       ...history,
       { role: 'user', content },
     ];
 
-    // 调用 Vision API
     const response = await callMimoAPI('/chat/completions', {
       model: 'mimo-v2.5',
       messages,
@@ -43,7 +46,7 @@ export async function processVision(
     const result = await response.json();
     return result.choices?.[0]?.message?.content || '抱歉，我无法理解';
   } catch (error) {
-    console.error('Vision processing error:', error);
+    console.error('Vision error:', error);
     throw new Error('视觉理解失败');
   }
 }

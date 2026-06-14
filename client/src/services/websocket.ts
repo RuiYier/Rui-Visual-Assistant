@@ -17,7 +17,6 @@ class WebSocketService {
     this.ws = new WebSocket(url);
 
     this.ws.onopen = () => {
-      console.log('WebSocket connected');
       this.reconnectAttempts = 0;
       this.emit('connected', { type: 'response', data: '已连接到服务器' });
     };
@@ -26,19 +25,17 @@ class WebSocketService {
       try {
         const message: ServerMessage = JSON.parse(event.data);
         this.emit(message.type, message);
-      } catch (error) {
-        console.error('Failed to parse message:', error);
+      } catch {
+        // ignore parse errors
       }
     };
 
     this.ws.onclose = () => {
-      console.log('WebSocket disconnected');
       this.emit('disconnected', { type: 'error', data: '连接断开' });
       this.attemptReconnect(url);
     };
 
-    this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+    this.ws.onerror = () => {
       this.emit('error', { type: 'error', data: '连接错误' });
     };
   }
@@ -46,7 +43,6 @@ class WebSocketService {
   private attemptReconnect(url: string) {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
       setTimeout(() => this.connect(url), this.reconnectDelay * this.reconnectAttempts);
     }
   }
@@ -54,8 +50,6 @@ class WebSocketService {
   send(message: ClientMessage) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
-    } else {
-      console.error('WebSocket is not connected');
     }
   }
 
@@ -95,5 +89,4 @@ class WebSocketService {
   }
 }
 
-// 单例
 export const wsService = new WebSocketService();

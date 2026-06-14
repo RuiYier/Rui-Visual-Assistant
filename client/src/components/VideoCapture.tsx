@@ -21,24 +21,21 @@ export function VideoCapture({
   onStartCamera,
   onStopCamera,
   onSwitchCamera,
-  onCaptureFrame,
   onToggleFullscreen,
 }: VideoCaptureProps) {
   return (
     <div className={`relative bg-gray-900 rounded-lg overflow-hidden ${
       isFullscreen ? 'fixed inset-0 z-50' : 'w-full aspect-video'
     }`}>
-      {/* 视频元素 */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
         className="w-full h-full object-cover"
-        style={{ transform: 'scaleX(-1)' }} // 镜像显示
+        style={{ transform: 'scaleX(-1)' }}
       />
 
-      {/* 未开启摄像头时的遮罩 */}
       {!isStreaming && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/80">
           {error ? (
@@ -55,7 +52,6 @@ export function VideoCapture({
         </div>
       )}
 
-      {/* 控制按钮 */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
         {!isStreaming ? (
           <button

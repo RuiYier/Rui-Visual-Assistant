@@ -49,7 +49,7 @@ export function PerformanceMonitor({ isVisible, onToggle }: PerformanceMonitorPr
           onClick={onToggle}
           className="text-gray-400 hover:text-white"
         >
-          ×
+          x
         </button>
       </div>
 

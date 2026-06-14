@@ -14,21 +14,19 @@ import { Settings } from 'lucide-react';
 
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('alloy');
+  const [selectedVoice, setSelectedVoice] = useState('冰糖');
   const [samplingRate, setSamplingRate] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isPerformanceVisible, setIsPerformanceVisible] = useState(false);
 
-  // 检测移动端
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
   const {
     videoRef,
     isStreaming: isCameraOn,
@@ -65,11 +63,9 @@ function App() {
   const isCameraOnRef = useRef(false);
   const isConnectedRef = useRef(false);
 
-  // 同步 ref
   useEffect(() => { isCameraOnRef.current = isCameraOn; }, [isCameraOn]);
   useEffect(() => { isConnectedRef.current = isConnected; }, [isConnected]);
 
-  // 智能采样
   const {
     currentRate,
     isActive: isSamplingActive,
@@ -83,13 +79,11 @@ function App() {
     transitionDelay: 3000,
   });
 
-  // 视频帧采样
   const startFrameSampling = useCallback(() => {
     startSampling(() => {
       if (isCameraOnRef.current && isConnectedRef.current) {
         const frame = captureFrame();
         if (frame) {
-          console.log('Sending video frame, size:', (frame.length / 1024).toFixed(2), 'KB');
           sendVideoFrame(frame);
         }
       }
@@ -100,19 +94,16 @@ function App() {
     stopSampling();
   }, [stopSampling]);
 
-  // 切换摄像头
   const handleToggleCamera = useCallback(async () => {
     if (isCameraOn) {
       stopCamera();
       stopFrameSampling();
     } else {
       await startCamera();
-      console.log('Camera started, starting frame sampling...');
       startFrameSampling();
     }
   }, [isCameraOn, startCamera, stopCamera, startFrameSampling, stopFrameSampling]);
 
-  // 切换麦克风
   const handleToggleMic = useCallback(async () => {
     if (isMicOn) {
       stopRecording();
@@ -120,12 +111,10 @@ function App() {
       setSamplingIdle();
     } else {
       await startRecording((audioBase64) => {
-        // 发送音频数据
         sendAudioChunk(audioBase64);
-        setSamplingActive(); // 检测到音频时设置为活跃
+        setSamplingActive();
       });
 
-      // 启动 VAD
       if (micStream) {
         vadRef.current = new VoiceActivityDetector(30, 1500);
         vadRef.current.start(micStream, (isSpeaking) => {
@@ -138,7 +127,6 @@ function App() {
     }
   }, [isMicOn, startRecording, stopRecording, sendAudioChunk, micStream, setSamplingActive, setSamplingIdle]);
 
-  // 截图分析
   const handleScreenshot = useCallback(() => {
     if (isCameraOn) {
       const frame = captureFrame();
@@ -148,7 +136,6 @@ function App() {
     }
   }, [isCameraOn, captureFrame, sendScreenshot]);
 
-  // 清理
   useEffect(() => {
     return () => {
       stopFrameSampling();
@@ -156,7 +143,6 @@ function App() {
     };
   }, [stopFrameSampling]);
 
-  // 快捷键
   useKeyboardShortcuts({
     onToggleCamera: handleToggleCamera,
     onToggleMic: handleToggleMic,
@@ -165,7 +151,6 @@ function App() {
     onToggleSettings: () => setIsSettingsOpen(!isSettingsOpen),
   });
 
-  // 设置改变时发送配置
   useEffect(() => {
     if (isConnected) {
       sendConfig({ voice: selectedVoice, samplingRate });
@@ -174,7 +159,6 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-      {/* 头部 */}
       <header className="px-6 py-4 bg-white shadow-sm flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">AI 视觉对话助手</h1>
@@ -191,11 +175,9 @@ function App() {
         </button>
       </header>
 
-      {/* 主内容区 */}
       <main className={`flex-1 flex gap-4 p-4 overflow-hidden ${
         isMobile ? 'flex-col' : 'flex-row'
       }`}>
-        {/* 左侧：视频区域 */}
         <div className={isMobile ? 'w-full' : 'w-1/2 flex flex-col'}>
           <VideoCapture
             videoRef={videoRef}
@@ -209,20 +191,19 @@ function App() {
             onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
           />
 
-          {/* 状态信息 */}
           <div className="mt-4 p-3 bg-white rounded-lg shadow-sm">
             <div className="flex items-center gap-4 text-sm flex-wrap">
               <span className={isCameraOn ? 'text-green-500' : 'text-gray-400'}>
-                ● 摄像头 {isCameraOn ? '开启' : '关闭'}
+                {isCameraOn ? '摄像头 开启' : '摄像头 关闭'}
               </span>
               <span className={isMicOn ? 'text-green-500' : 'text-gray-400'}>
-                ● 麦克风 {isMicOn ? '开启' : '关闭'}
+                {isMicOn ? '麦克风 开启' : '麦克风 关闭'}
               </span>
               <span className={isConnected ? 'text-green-500' : 'text-gray-400'}>
-                ● 服务器 {isConnected ? '已连接' : '未连接'}
+                {isConnected ? '服务器 已连接' : '服务器 未连接'}
               </span>
               <span className={isSamplingActive ? 'text-blue-500' : 'text-gray-400'}>
-                ● 采样 {currentRate.toFixed(1)} fps
+                采样 {currentRate.toFixed(1)} fps
               </span>
             </div>
             {(cameraError || micError) && (
@@ -233,7 +214,6 @@ function App() {
           </div>
         </div>
 
-        {/* 右侧：对话区域 */}
         <div className={isMobile ? 'w-full flex-1' : 'w-1/2'}>
           <ChatPanel
             messages={messages}
@@ -244,7 +224,6 @@ function App() {
         </div>
       </main>
 
-      {/* 底部控制栏 */}
       <ControlBar
         isCameraOn={isCameraOn}
         isMicOn={isMicOn}
@@ -256,7 +235,6 @@ function App() {
         onClearMessages={clearMessages}
       />
 
-      {/* 设置面板 */}
       <SettingsPanel
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -266,7 +244,6 @@ function App() {
         onSamplingRateChange={setSamplingRate}
       />
 
-      {/* 性能监控 */}
       <PerformanceMonitor
         isVisible={isPerformanceVisible}
         onToggle={() => setIsPerformanceVisible(!isPerformanceVisible)}

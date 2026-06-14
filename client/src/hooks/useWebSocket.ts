@@ -12,17 +12,14 @@ export function useWebSocket() {
   const isPlayingRef = useRef(false);
 
   useEffect(() => {
-    // 连接 WebSocket
     wsService.connect();
 
-    // 注册事件处理
     const handleConnected = () => setIsConnected(true);
     const handleDisconnected = () => setIsConnected(false);
 
     const handleTranscript = (message: ServerMessage) => {
       if (message.isFinal) {
         setCurrentTranscript('');
-        // 添加用户消息
         setMessages((prev) => [
           ...prev,
           {
@@ -41,7 +38,6 @@ export function useWebSocket() {
       if (message.isFinal) {
         setCurrentResponse('');
         setIsProcessing(false);
-        // 添加 AI 回复
         setMessages((prev) => [
           ...prev,
           {
@@ -92,14 +88,14 @@ export function useWebSocket() {
     const base64 = audioQueueRef.current.shift()!;
 
     const audio = new Audio();
-    const blob = base64ToBlob(base64, 'audio/mp3');
+    const blob = base64ToBlob(base64, 'audio/wav');
     const url = URL.createObjectURL(blob);
 
     audio.src = url;
     audio.onended = () => {
       URL.revokeObjectURL(url);
       isPlayingRef.current = false;
-      playNextAudio(); // 播放下一个
+      playNextAudio();
     };
     audio.onerror = () => {
       URL.revokeObjectURL(url);
@@ -126,7 +122,7 @@ export function useWebSocket() {
       type: 'audio_chunk',
       data: base64,
       timestamp: Date.now(),
-      mimeType: mimeType,
+      mimeType,
     });
   }, []);
 

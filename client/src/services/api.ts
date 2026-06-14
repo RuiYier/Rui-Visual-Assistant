@@ -10,16 +10,12 @@ export async function fetchVoices(): Promise<Voice[]> {
     }
     const data = await response.json();
     return data.voices;
-  } catch (error) {
-    console.error('Error fetching voices:', error);
-    // 返回默认音色列表
+  } catch {
     return [
-      { id: 'alloy', name: 'Alloy', description: '中性、平衡' },
-      { id: 'echo', name: 'Echo', description: '男性、沉稳' },
-      { id: 'fable', name: 'Fable', description: '男性、温暖' },
-      { id: 'onyx', name: 'Onyx', description: '男性、深沉' },
-      { id: 'nova', name: 'Nova', description: '女性、活泼' },
-      { id: 'shimmer', name: 'Shimmer', description: '女性、柔和' },
+      { id: '冰糖', name: '冰糖', description: '中文女性' },
+      { id: '茉莉', name: '茉莉', description: '中文女性' },
+      { id: '苏打', name: '苏打', description: '中文男性' },
+      { id: '白桦', name: '白桦', description: '中文男性' },
     ];
   }
 }
@@ -30,8 +26,7 @@ export async function clearTTSCache(): Promise<boolean> {
       method: 'POST',
     });
     return response.ok;
-  } catch (error) {
-    console.error('Error clearing TTS cache:', error);
+  } catch {
     return false;
   }
 }

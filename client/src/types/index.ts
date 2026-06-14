@@ -1,9 +1,8 @@
-// WebSocket 消息类型
 export interface ClientMessage {
   type: 'video_frame' | 'audio_chunk' | 'screenshot' | 'config';
-  data: string;  // Base64 编码 或 JSON 配置
+  data: string;
   timestamp: number;
-  mimeType?: string;  // 音频 MIME 类型
+  mimeType?: string;
 }
 
 export interface ServerMessage {
@@ -12,23 +11,20 @@ export interface ServerMessage {
   isFinal?: boolean;
 }
 
-// 对话消息
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
-  image?: string;  // Base64 图片
+  image?: string;
 }
 
-// 摄像头配置
 export interface CameraConfig {
   width: number;
   height: number;
   facingMode: 'user' | 'environment';
 }
 
-// 音频配置
 export interface AudioConfig {
   sampleRate: number;
   channelCount: number;
@@ -36,19 +32,6 @@ export interface AudioConfig {
   noiseSuppression: boolean;
 }
 
-// 应用状态
-export interface AppState {
-  isCameraOn: boolean;
-  isMicOn: boolean;
-  isRecording: boolean;
-  isProcessing: boolean;
-  messages: ChatMessage[];
-  currentTranscript: string;
-  selectedVoice: string;
-  samplingRate: number;  // fps
-}
-
-// TTS 音色
 export interface Voice {
   id: string;
   name: string;

@@ -24,7 +24,6 @@ export function ControlBar({
 }: ControlBarProps) {
   return (
     <div className="flex items-center justify-between px-6 py-3 bg-white border-t">
-      {/* 左侧状态 */}
       <div className="flex items-center gap-2">
         {isConnected ? (
           <div className="flex items-center gap-1 text-green-500">
@@ -46,7 +45,6 @@ export function ControlBar({
         )}
       </div>
 
-      {/* 中间控制按钮 */}
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleCamera}
@@ -90,7 +88,6 @@ export function ControlBar({
         </button>
       </div>
 
-      {/* 右侧占位 */}
       <div className="w-24" />
     </div>
   );
