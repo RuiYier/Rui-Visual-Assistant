@@ -8,9 +8,9 @@
 
 **演示链接**
 
-（YouTube)  https://youtu.be/lMUsdiDzXXc
+（YouTube 推荐)  https://youtu.be/lMUsdiDzXXc
 
-（百度网盘 无需登录在线观看糊 建议转存播放）: https://pan.baidu.com/s/1CrLE2vcma-QI3QYP1HrTZg?pwd=6666  提取码: 6666
+（百度网盘 在线观看糊建议转存播放）: https://pan.baidu.com/s/1CrLE2vcma-QI3QYP1HrTZg?pwd=6666  提取码: 6666
 
 ## 一、用户故事
 
