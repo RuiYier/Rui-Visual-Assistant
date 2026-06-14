@@ -67,7 +67,10 @@ export function useWebSocket() {
     };
 
     const handleError = (message: ServerMessage) => {
-      console.error('Server error:', message.data);
+      // 连接错误是预期的（服务器未启动时），不记录到控制台
+      if (message.data !== '连接错误') {
+        console.error('Server error:', message.data);
+      }
       performanceMonitor.recordError();
       setIsProcessing(false);
     };
