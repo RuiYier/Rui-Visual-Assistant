@@ -28,22 +28,19 @@ export function useKeyboardShortcuts({
 
       switch (event.key.toLowerCase()) {
         case 'c':
-          if (!isCtrlOrCmd) onToggleCamera?.();
+          onToggleCamera?.();
           break;
         case 'm':
-          if (!isCtrlOrCmd) onToggleMic?.();
+          onToggleMic?.();
           break;
         case 's':
-          if (!isCtrlOrCmd) onScreenshot?.();
+          onScreenshot?.();
           break;
         case 'd':
-          if (!isCtrlOrCmd) onClearMessages?.();
+          onClearMessages?.();
           break;
-        case ',':
-          if (isCtrlOrCmd) {
-            event.preventDefault();
-            onToggleSettings?.();
-          }
+        case 'p':
+          onToggleSettings?.();
           break;
         case 'escape':
           onToggleSettings?.();
