@@ -56,6 +56,15 @@ function writeString(view: DataView, offset: number, str: string) {
   }
 }
 
+// 计算音频音量 (RMS)
+function calculateVolume(samples: Float32Array): number {
+  let sum = 0;
+  for (let i = 0; i < samples.length; i++) {
+    sum += samples[i] * samples[i];
+  }
+  return Math.sqrt(sum / samples.length) * 1000;
+}
+
 export function useMicrophone(config: AudioConfig = defaultConfig) {
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +73,32 @@ export function useMicrophone(config: AudioConfig = defaultConfig) {
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const chunksRef = useRef<Float32Array[]>([]);
   const onAudioDataRef = useRef<((data: string) => void) | null>(null);
-  const sendIntervalRef = useRef<number | null>(null);
+  const silenceTimerRef = useRef<number | null>(null);
+  const isSpeakingRef = useRef(false);
+  const maxDurationTimerRef = useRef<number | null>(null);
+
+  const sendAudioData = useCallback(() => {
+    if (chunksRef.current.length > 0 && onAudioDataRef.current) {
+      const chunks = chunksRef.current.splice(0);
+      const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+      const mergedData = new Float32Array(totalLength);
+      let offset = 0;
+      for (const chunk of chunks) {
+        mergedData.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      const duration = mergedData.length / config.sampleRate;
+      const volume = calculateVolume(mergedData);
+
+      // 过滤太短或太安静的音频
+      if (duration > 0.3 && volume > 3) {
+        const base64 = float32ArrayToWavBase64(mergedData, config.sampleRate);
+        onAudioDataRef.current(base64);
+      }
+    }
+    isSpeakingRef.current = false;
+  }, [config]);
 
   const startRecording = useCallback(async (onAudioData?: (data: string) => void) => {
     try {
@@ -94,53 +128,69 @@ export function useMicrophone(config: AudioConfig = defaultConfig) {
       processor.onaudioprocess = (e) => {
         const inputData = e.inputBuffer.getChannelData(0);
         const data = new Float32Array(inputData);
-        chunksRef.current.push(data);
+        const volume = calculateVolume(data);
+
+        // 检测到声音
+        if (volume > 15) {
+          chunksRef.current.push(data);
+
+          if (!isSpeakingRef.current) {
+            isSpeakingRef.current = true;
+
+            // 设置最大录制时长（8秒后强制发送）
+            if (maxDurationTimerRef.current) {
+              clearTimeout(maxDurationTimerRef.current);
+            }
+            maxDurationTimerRef.current = window.setTimeout(() => {
+              if (isSpeakingRef.current) {
+                sendAudioData();
+              }
+            }, 8000);
+          }
+
+          // 重置静音计时器
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+          }
+          silenceTimerRef.current = window.setTimeout(() => {
+            if (isSpeakingRef.current) {
+              sendAudioData();
+            }
+          }, 600); // 600ms 静音后发送
+        } else if (isSpeakingRef.current) {
+          // 静音但还在说话状态，继续收集（包含停顿）
+          chunksRef.current.push(data);
+
+          // 重置静音计时器
+          if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+          }
+          silenceTimerRef.current = window.setTimeout(() => {
+            if (isSpeakingRef.current) {
+              sendAudioData();
+            }
+          }, 600);
+        }
       };
 
       source.connect(processor);
       processor.connect(audioContext.destination);
 
-      // 每 3 秒发送音频数据
-      sendIntervalRef.current = window.setInterval(() => {
-        if (chunksRef.current.length > 0 && onAudioDataRef.current) {
-          const chunks = chunksRef.current.splice(0);
-          const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-          const mergedData = new Float32Array(totalLength);
-          let offset = 0;
-          for (const chunk of chunks) {
-            mergedData.set(chunk, offset);
-            offset += chunk.length;
-          }
-
-          const duration = mergedData.length / config.sampleRate;
-
-          // 过滤短音频和静音
-          if (duration > 0.5) {
-            let sum = 0;
-            for (let i = 0; i < mergedData.length; i++) {
-              sum += mergedData[i] * mergedData[i];
-            }
-            const rms = Math.sqrt(sum / mergedData.length);
-            const volume = rms * 1000;
-
-            if (volume > 5) {
-              const base64 = float32ArrayToWavBase64(mergedData, config.sampleRate);
-              onAudioDataRef.current(base64);
-            }
-          }
-        }
-      }, 3000);
-
       setIsRecording(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : '无法访问麦克风');
     }
-  }, [config]);
+  }, [config, sendAudioData]);
 
   const stopRecording = useCallback(() => {
-    if (sendIntervalRef.current) {
-      clearInterval(sendIntervalRef.current);
-      sendIntervalRef.current = null;
+    // 清除所有计时器
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (maxDurationTimerRef.current) {
+      clearTimeout(maxDurationTimerRef.current);
+      maxDurationTimerRef.current = null;
     }
 
     if (processorRef.current) {
@@ -159,25 +209,15 @@ export function useMicrophone(config: AudioConfig = defaultConfig) {
     }
 
     // 发送剩余音频
-    if (chunksRef.current.length > 0 && onAudioDataRef.current) {
-      const totalLength = chunksRef.current.reduce((sum, chunk) => sum + chunk.length, 0);
-      const mergedData = new Float32Array(totalLength);
-      let offset = 0;
-      for (const chunk of chunksRef.current) {
-        mergedData.set(chunk, offset);
-        offset += chunk.length;
-      }
-      chunksRef.current = [];
-
-      const base64 = float32ArrayToWavBase64(mergedData, config.sampleRate);
-      onAudioDataRef.current(base64);
-    } else {
-      chunksRef.current = [];
+    if (isSpeakingRef.current) {
+      sendAudioData();
     }
+    chunksRef.current = [];
+    isSpeakingRef.current = false;
 
     onAudioDataRef.current = null;
     setIsRecording(false);
-  }, [config]);
+  }, [sendAudioData]);
 
   useEffect(() => {
     return () => {

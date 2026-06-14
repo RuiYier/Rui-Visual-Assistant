@@ -6,6 +6,8 @@
 >
 > 开发一款与 AI 对话的应用，要求：打开摄像头与麦克风，让 AI 能够看到摄像头中的视频内容、听到用户说的话，并给予恰当的回应。需综合考虑视觉内容的理解准确性、语音交互的自然度与流畅性，以及端云协同的成本控制策略等。
 
+**演示链接**（Baidu网盘）: https://pan.baidu.com/s/1CrLE2vcma-QI3QYP1HrTZg?pwd=6666  提取码: 6666
+
 ## 一、用户故事
 
 ### 计划实现的用户故事
@@ -22,7 +24,7 @@ P0: MVP 核心功能  |  P1: 重要功能扩展  |  P2: 体验优化完善  |  P
 | US-06 | 作为用户，我想在静默时节省资源消耗 | P1 | ✅ 已实现 |
 | US-07 | 作为用户，我想在移动端也能正常使用 | P1 | ✅ 已实现 |
 | US-08 | 作为用户，我想截图让AI分析特定画面 | P2 | ✅ 已实现 |
-| US-09 | 作为用户，我想看到当前的采样状态和连接状态 | P2 | ✅ 已实现 |
+| US-09 | 作为用户，我想看到当前的连接状态 | P2 | ✅ 已实现 |
 | US-10 | 作为用户，我想导出对话历史记录 | P2 | ✅ 已实现 |
 | US-11 | 作为用户，我想调整视频帧采样频率 | P3 | ✅ 已实现 |
 | US-12 | 作为用户，我想使用快捷键操作 | P3 | ✅ 已实现 |
@@ -231,15 +233,6 @@ Rui-Visual-Assistant/
 | PR6 | feat: 完善错误处理与稳定性 | feat/error-handling | ✅ 已合并 | [#6](https://github.com/RuiYier/Rui-Visual-Assistant/pull/6) |
 | PR7 | feat: 添加性能监控功能 | feat/performance-monitoring | ✅ 已合并 | [#7](https://github.com/RuiYier/Rui-Visual-Assistant/pull/7) |
 | PR8 | feat: 添加对话历史导出功能 | feat/export-history | ✅ 已合并 | [#8](https://github.com/RuiYier/Rui-Visual-Assistant/pull/8) |
-
-### 主要提交记录
-
-| 提交 | 说明 |
-|------|------|
-| fix: 修复语音识别和语音合成问题 | 修复 ASR/TTS API 调用格式，添加水词过滤和音频检测 |
-| style: 优化 UI 设计，提升视觉体验 | 更换 favicon，优化配色方案，添加动画效果 |
-| docs: 更新 README 文档，完善项目说明 | 补充依赖列表和功能说明 |
-| fix: 简化快捷键为单按键，避免冲突 | 改用单按键快捷键，避免与浏览器冲突 |
 
 ### 快捷键说明
 
